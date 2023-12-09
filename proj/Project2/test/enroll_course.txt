@@ -1,0 +1,42 @@
+//COURSE_NOT_FOUND
+            PreparedStatement stmt = con.prepareStatement("select * from sections where id = ?");
+            stmt.setInt(1, sectionId);
+            ResultSet resultSet1 = stmt.executeQuery();
+            if (resultSet1.wasNull()) return EnrollResult.COURSE_NOT_FOUND;
+
+            //ALREADY_ENROLLED
+            stmt = con.prepareStatement("select * from select_course where student_id = ? and section_id = ?");
+            stmt.setInt(1, studentId);
+            stmt.setInt(2, sectionId);
+            int cnt = stmt.executeUpdate();
+            if (cnt > 0) return EnrollResult.ALREADY_ENROLLED;
+
+            //ALREADY_PASSED
+            stmt = con.prepareStatement("select course_id, grade_type from sections sec join courses cou on sec.course_id = cou.id where sec.id = ?");
+            stmt.setInt(1, sectionId);
+            ResultSet resultSet2 = stmt.executeQuery();
+            String courseId = resultSet2.getString(1);
+            String gradeType = resultSet2.getString(2);
+            if (gradeType.equals("P")) {
+                stmt = con.prepareStatement("select grade from student_grades_pf where student_id = ? and course_id = ?");
+                stmt.setInt(1, studentId);
+                stmt.setString(2, courseId);
+                ResultSet resultSet = stmt.executeQuery();
+                String grade = resultSet.getString(1);
+                if (grade.equals("PASS")) return EnrollResult.ALREADY_PASSED;
+            } else {
+                stmt = con.prepareStatement("select grade from student_grades_hundred where student_id = ? and course_id = ?");
+                stmt.setInt(1, studentId);
+                stmt.setString(2, courseId);
+                ResultSet resultSet = stmt.executeQuery();
+                short grade = resultSet.getShort(1);
+                if (grade >= 60) return EnrollResult.ALREADY_PASSED;
+            }
+
+            //PREREQUISITES_NOT_FULFILLED
+
+            //COURSE_CONFLICT_FOUND
+
+            //COURSE_IS_FULL
+
+            //UNKNOWN_ERROR
